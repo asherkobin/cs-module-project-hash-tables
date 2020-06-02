@@ -20,8 +20,9 @@ class HashTable:
     Implement this.
     """
 
-    def __init__(self, capacity):
-        # Your code here
+    def __init__(self, capacity = MIN_CAPACITY):
+        self.buckets = [None] * capacity
+        self.capacity = capacity
 
 
     def get_num_slots(self):
@@ -34,7 +35,7 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        return len(self.buckets)
 
 
     def get_load_factor(self):
@@ -52,8 +53,17 @@ class HashTable:
 
         Implement this, and/or DJB2.
         """
+        # https://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function#FNV-1_hash
+        FNV_offset_basis = 14695981039346656037
+        FNV_prime = 1099511628211
+        
+        hash = FNV_offset_basis
 
-        # Your code here
+        for byte in key.encode():
+          hash = hash * FNV_prime
+          hash = hash ^ byte
+        
+        return hash
 
 
     def djb2(self, key):
@@ -81,8 +91,9 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
-
+        slot_num = self.get_key_slot(key)
+        
+        self.buckets[slot_num] = value
 
     def delete(self, key):
         """
@@ -92,7 +103,7 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        self.put(key, None)
 
 
     def get(self, key):
@@ -103,7 +114,9 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        slot_num = self.get_key_slot(key)
+        
+        return self.buckets[slot_num]
 
 
     def resize(self, new_capacity):
@@ -115,7 +128,8 @@ class HashTable:
         """
         # Your code here
 
-
+    def get_key_slot(self, key):
+        return self.fnv1(key) % len(self.buckets)
 
 if __name__ == "__main__":
     ht = HashTable(8)
