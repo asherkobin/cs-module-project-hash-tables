@@ -7,6 +7,10 @@ class HashTableEntry:
         self.value = value
         self.next = None
 
+    def __str__(self):
+      return self.value
+
+
 
 # Hash table can't have fewer than this many slots
 MIN_CAPACITY = 8
@@ -65,23 +69,8 @@ class HashTable:
         
         return hash
 
-
-    def djb2(self, key):
-        """
-        DJB2 hash, 32-bit
-
-        Implement this, and/or FNV-1.
-        """
-        # Your code here
-
-
-    def hash_index(self, key):
-        """
-        Take an arbitrary key and return a valid integer index
-        between within the storage capacity of the hash table.
-        """
-        #return self.fnv1(key) % self.capacity
-        return self.djb2(key) % self.capacity
+    def hash_index(self, key, capacity):
+        return self.get_key_slot(key, capacity)
 
     def put(self, key, value):
         """
@@ -91,10 +80,8 @@ class HashTable:
 
         Implement this.
         """
-        slot_num = self.get_key_slot(key)
+        self.put_in_buckets(key, value, self.buckets, self.capacity)
         
-        self.buckets[slot_num] = value
-
     def delete(self, key):
         """
         Remove the value stored with the given key.
@@ -105,20 +92,28 @@ class HashTable:
         """
         self.put(key, None)
 
-
     def get(self, key):
-        """
-        Retrieve the value stored with the given key.
+      """
+      Retrieve the value stored with the given key.
 
-        Returns None if the key is not found.
+      Returns None if the key is not found.
 
-        Implement this.
-        """
-        slot_num = self.get_key_slot(key)
+      Implement this.
+      """
+      slot_num = self.get_key_slot(key, self.capacity)
+      top_level_item = self.buckets[slot_num]
+      
+      if top_level_item == None:
+        return None
+      else:
+        cur_item = top_level_item
+        while cur_item:
+          if cur_item.key == key:
+            return cur_item.value
+          cur_item = cur_item.next
         
-        return self.buckets[slot_num]
-
-
+        return None
+        
     def resize(self, new_capacity):
         """
         Changes the capacity of the hash table and
@@ -126,14 +121,67 @@ class HashTable:
 
         Implement this.
         """
-        # Your code here
+        
+        new_buckets = [None] * new_capacity
 
-    def get_key_slot(self, key):
-        return self.fnv1(key) % len(self.buckets)
+        for item in self.buckets:
+          self.put_in_buckets(item.key, item.value, new_buckets, new_capacity)
+          item = item.next
+          while item:
+            self.put_in_buckets(item.key, item.value, new_buckets, new_capacity)
+            item = item.next
+            
+        self.buckets = new_buckets
+        self.capacity = new_capacity
+
+    def get_key_slot(self, key, capacity):
+        return self.fnv1(key) % capacity
+
+    def put_in_buckets(self, key, value, buckets, capacity):
+
+      is_delete_operation = False
+      if value == None:
+        is_delete_operation = True
+      
+      item = HashTableEntry(key, value)
+      slot_num = self.get_key_slot(key, capacity)
+      top_level_item = buckets[slot_num]
+      
+      if top_level_item == None or top_level_item.key == key:
+        if is_delete_operation:
+          if top_level_item.next:
+            buckets[slot_num] = top_level_item.next
+          else:
+            buckets[slot_num] = None
+        else:
+          buckets[slot_num] = item
+      
+      else:
+        prev_item = None
+        cur_item = top_level_item
+        next_item = cur_item.next
+        
+        while cur_item:
+          if cur_item.key == key:    # key is present #
+            if is_delete_operation:
+              prev_item.next = next_item
+            else:
+              cur_item.value = value
+            break
+          
+          elif not next_item:
+            cur_item.next = item
+            break
+          
+          prev_item = cur_item
+          cur_item = next_item
+          next_item = cur_item.next
 
 if __name__ == "__main__":
+
     ht = HashTable(8)
 
+    ht.put("line_1", "'Twas brillig, and the slithy toves")
     ht.put("line_1", "'Twas brillig, and the slithy toves")
     ht.put("line_2", "Did gyre and gimble in the wabe:")
     ht.put("line_3", "All mimsy were the borogoves,")
@@ -146,6 +194,8 @@ if __name__ == "__main__":
     ht.put("line_10", "Long time the manxome foe he sought--")
     ht.put("line_11", "So rested he by the Tumtum tree")
     ht.put("line_12", "And stood awhile in thought.")
+
+    ht.delete("aline_12")
 
     print("")
 
