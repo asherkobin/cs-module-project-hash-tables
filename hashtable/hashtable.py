@@ -125,10 +125,10 @@ class HashTable:
         new_buckets = [None] * new_capacity
 
         for item in self.buckets:
-          self.put_in_buckets(item.key, item.value, new_buckets, new_capacity)
+          self.put_in_buckets(item.key, item.value, new_buckets, new_capacity, True)
           item = item.next
           while item:
-            self.put_in_buckets(item.key, item.value, new_buckets, new_capacity)
+            self.put_in_buckets(item.key, item.value, new_buckets, new_capacity, True)
             item = item.next
             
         self.buckets = new_buckets
@@ -137,11 +137,39 @@ class HashTable:
     def get_key_slot(self, key, capacity):
         return self.fnv1(key) % capacity
 
-    def put_in_buckets(self, key, value, buckets, capacity):
+    def get_item_count(self):
+      num_items = 0
+
+      for item in self.buckets:
+        if item != None:
+          num_items += 1
+          cur_item = item
+          while cur_item:
+            if cur_item.next:
+              num_items += 1
+            cur_item = cur_item.next
+
+      return num_items
+
+    def needs_resize(self):
+      item_count = self.get_item_count()
+      if item_count == 0:
+        return False
+      
+      if self.get_load_factor() >= 0.7:
+        return True
+      return False
+
+    def put_in_buckets(self, key, value, buckets, capacity, no_resize_check = True):
 
       is_delete_operation = False
       if value == None:
         is_delete_operation = True
+
+      if no_resize_check == False:
+        if is_delete_operation == False:
+          if self.needs_resize():
+            self.resize(self.capacity * 2)
       
       item = HashTableEntry(key, value)
       slot_num = self.get_key_slot(key, capacity)
@@ -194,8 +222,6 @@ if __name__ == "__main__":
     ht.put("line_10", "Long time the manxome foe he sought--")
     ht.put("line_11", "So rested he by the Tumtum tree")
     ht.put("line_12", "And stood awhile in thought.")
-
-    ht.delete("aline_12")
 
     print("")
 
