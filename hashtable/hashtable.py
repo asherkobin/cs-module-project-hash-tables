@@ -156,7 +156,7 @@ class HashTable:
       if item_count == 0:
         return False
       
-      if self.get_load_factor() >= 0.7:
+      if (item_count / len(self.buckets)) >= 0.7:
         return True
       return False
 
