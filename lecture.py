@@ -171,3 +171,4 @@ def decode(s):
 build_decode_table()
 e = encode("@ASH!ER")
 print(decode(e))
+
